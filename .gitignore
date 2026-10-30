@@ -1,0 +1,94 @@
+# =====================================================================
+# Scope: this repo IS the fastq -> RDS pipeline. Tracked content is the
+# workflow, the R stage, the config templates, the docs and the QC
+# report source -- roughly 20 files. Everything a run produces is
+# regenerable from the FASTQs and stays out.
+#
+# NB: gitignore has no trailing comments -- a '#' after a pattern makes
+# it part of the pattern and the rule silently stops matching. Comments
+# go on their own line.
+# =====================================================================
+
+# ---- Raw sequencing data (hundreds of GB; never in git) ----
+fastq_read1/*
+fastq_read2/*
+*.fq
+*.fastq
+*.fq.gz
+*.fastq.gz
+
+# ---- Alignment output (regenerable; most are temp() in the Snakefile) ----
+sam/*
+R2_aligned_to_masked_genome/*
+*.sam
+*.bam
+*.bam.bai
+*.cram
+
+# ---- Reference genome and prebuilt aligner indexes ----
+# Rebuildable: see README "Installation and references". The STAR masked
+# index alone is ~24 GB resident.
+fasta/*
+*.fa
+*.fasta
+*.fa.gz
+*.fasta.gz
+*.bt2
+*.bt2l
+*.fai
+
+# ---- Pipeline output: the deliverables themselves ----
+# The RDS tables are the product, not source. A consumer rebuilds them
+# from FASTQ; committing them would put GB of results in git.
+R_input/*
+R_output/*
+*.rds
+*_deduplication.csv
+
+# ---- fastp / per-run reports and metrics (regenerable) ----
+*.fp_report.html
+*_fp_report.html
+*_fp_report.json
+fastp.json
+reports/*.html
+reports/*_metrics.tsv
+*.pdf
+
+# ---- Per-library configs: the driver regenerates these from the template ----
+config/generated/*
+
+# ---- Snakemake state, logs, cluster output, run-local scratch ----
+.snakemake/
+logs/*
+slurm-*.out
+*.log
+tmp/
+
+# ---- R / Python / editor / OS ----
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+venv/
+.venv/
+.DS_Store
+*~
+*.swp
+.vscode/
+.idea/
+.quarto/
+
+# ---- Operon session state ----
+.operon/
+.operon-*
+
+# =====================================================================
+# Explicitly kept: the one tracked binary, and the directory structure a
+# run needs. Without the .gitkeep files a fresh clone has no fastq_read1/
+# for you to drop reads into.
+# =====================================================================
+!annotation/*.rds
+!**/.gitkeep

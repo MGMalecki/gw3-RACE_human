@@ -1,0 +1,63 @@
+# Minimal environment for pipeline_Z: fastq -> R_output/<stem>_final_{big,small}.rds
+#
+# This is the complete dependency set for the workflow. `environment.yml` in this repo is a
+# broader general-purpose genomics environment and is NOT required to run the pipeline.
+#
+# Create with:
+#   conda env create -f environment_pipeline.yml
+#   conda activate pipeline_z
+#
+# Versions are minimums, chosen as the set the pipeline was validated against (exact builds in
+# environment.lock.txt). Newer is generally fine; see the two notes at the bottom.
+
+name: pipeline_z
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  # --- orchestration -----------------------------------------------------------------
+  - snakemake >=7.32
+  - python >=3.9           # rule align_R2_bowtie_genome_end_to_end calls
+                           # R_scripts/extract_read_tags.py (stdlib only, no pysam)
+
+  # --- read processing and alignment -------------------------------------------------
+  - fastp >=0.23           # adapter/UMI handling on R2; quality filter deliberately off
+  - seqtk >=1.3            # subsetting R1/R2 to the mates whose R1 aligned
+  - bowtie2 >=2.4          # R1 -> transcriptome; R2 -> unmasked genome (templated check)
+                           # also provides bowtie2-build for the two bowtie2 indexes
+  - star >=2.7.10          # R2 -> AT-masked genome; this alignment IS the tail measurement
+                           # also provides --runMode genomeGenerate
+
+  # --- the R stage ------------------------------------------------------------------
+  # R_scripts/*.R load exactly these four packages and nothing else.
+  - r-base >=4.2
+  - r-dplyr
+  - r-tidyr
+  - r-stringr
+  - r-stringi
+
+  # --- building the references (one-off; comment out if you already have them) --------
+  # The AT-masked genome is not distributed and must be built locally, so a first-time
+  # setup does need these. See "Building the AT-masked genome" in README.md.
+  - bedtools >=2.30        # bedtools maskfasta, applies the AT-run BED to the assembly
+  - seqkit >=2.0           # splitting the assembly per chromosome for the masking scan
+
+# Deliberately NOT included
+# ------------------------------------------------------------------------------------
+# quarto  - only needed to render reports/run_report.qmd, which is optional QC. Install it
+#           separately if you want the report; the pipeline runs without it.
+# samtools, fastqc, umi_tools, pysam, rseqc, bedops, modkit, the UCSC tools - none of these
+#           are invoked anywhere in Snakefile, scripts/ or R_scripts/. UMI handling is
+#           fastp's --umi plus a distinct() in R; no SAM/BAM post-processing happens.
+#
+# Two version notes
+# ------------------------------------------------------------------------------------
+# STAR:  a STAR index can only be read by a compatible STAR version. If you build your own
+#        index with whatever STAR this env installs, you are self-consistent and fine. If you
+#        inherit someone else's index, match their STAR version — check `versionGenome` in the
+#        index's genomeParameters.txt.
+# R:     the four packages above are all the pipeline needs. r-base is pinned loosely because
+#        nothing in R_scripts/ depends on a recent feature; a system R with those four
+#        packages works equally well if you would rather not install R through conda.

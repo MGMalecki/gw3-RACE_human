@@ -1,0 +1,32 @@
+sample: __SAMPLE__
+R1: __R1__
+R2: __R2__
+
+reference:
+  transcriptome_bowtie2_index: "fasta/index_bowtie_full_transcriptome/full_trans_"
+  genome_bowtie2_index: "fasta/index_bowtie_genome/GRCh38_primary_genome"
+  genome_star_masked_index_dir: "fasta/index_masked_genome_star/"
+  gene_annotation_rds: "annotation/gene_annotations_v50.rds"
+
+# No quality-filter keys: fastp always runs with -Q (filtering off), hardcoded in the
+# Snakefile. A Q30 filter would remove 99.4-99.9% of reads carrying a tail >= 20 nt,
+# because sequencing quality collapses right after the homopolymer. See the comment on
+# rule fastp_filtering_R2 and docs/TAIL_CATEGORIES.md.
+
+# --- STAR multimapper handling (adopted 2026-09-25, see implementation_plan.md §12) ---
+# 1 / 1 reproduces the 2026-09-24 behaviour: any read at >1 locus is discarded as
+# uT:A:3 and tail-called by the unanchored fallback. 20 / 1 accepts up to 20 loci
+# but emits only the best alignment, so the read keeps a CIGAR and carries NH:i:.
+star_multimap_nmax: 20
+star_sam_mult_nmax: 1
+# --- STAR acceptance thresholds (adopted 2026-09-30, see implementation_plan.md §10) ---
+# These compare the aligned portion to the FULL READ length, so on an 81 nt R2 the
+# largest reportable anchored tail is read_len * (1 - threshold). Measured exactly:
+#   0.66 (STAR default) -> max anchored tail 28   |  0 confirmed reads with tail >= 30
+#   0.50                -> max anchored tail 40   |  1,469 confirmed reads with tail >= 30
+#   0.30                -> max anchored tail 56   |  but 93.78% of the rescue is multi_locus
+# 0.50 is adopted: zero collateral (0 of 304,592 previously-anchored reads changed their
+# tail_len or class) and the rescue is 70.37% confirmed. mismatch stays at STAR's 0.05.
+star_score_min_over_lread: 0.5
+star_match_nmin_over_lread: 0.5
+star_mismatch_nover_readlmax: 0.05

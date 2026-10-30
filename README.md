@@ -324,8 +324,7 @@ snakemake --configfile config/generated/<stem>.yaml --cores 16 \
 > `--configfile` only; with none supplied it stops immediately and tells you what to pass. (A
 > hardcoded `configfile: "config.yaml"` used to sit at the top of the `Snakefile`, which meant the
 > workflow refused to start unless that file existed and silently merged it under whatever you
-> passed. Both behaviours are gone.) `run_pipeline.sh`, the top-level `config.yaml` and `RUN_NOTES.md`
-> are leftovers from an early single-sample run and are not used.
+> passed. Both behaviours are gone.)
 
 ## How the pipeline works
 

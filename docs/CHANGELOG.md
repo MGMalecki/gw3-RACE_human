@@ -1,6 +1,8 @@
 # Changelog
 
-Development history of `pipeline_Z`, displaced here from `README.md` when that became a user manual.
+Development history of this pipeline. It was built in the `pipeline_Z` repository and split out
+into `gw3-RACE_human` on 2026-10-30; entries dated before then were written under the old name.
+Displaced here from `README.md` when that became a user manual.
 Nothing operational lives in this file; it is a record of how the current design was arrived at.
 
 ## 2026-10-21 — environment narrowed to the pipeline

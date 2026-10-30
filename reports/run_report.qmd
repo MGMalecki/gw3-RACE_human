@@ -1,5 +1,5 @@
 ---
-title: "pipeline_Z — 12-sample run report"
+title: "gw3-RACE_human — 12-sample run report"
 subtitle: "Read counts, alignment statistics and duplication levels"
 date: today
 format:

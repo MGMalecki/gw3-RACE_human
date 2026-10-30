@@ -1,4 +1,4 @@
-# pipeline_Z
+# gw3-RACE_human
 
 A Snakemake pipeline that turns paired-end 3'-end RACE sequencing (3' RACE-seq) into per-read
 measurements of non-templated 3' tails. For every molecule it reports whether the transcript carries
@@ -75,7 +75,7 @@ mismatch costs.
 ## Installation and references
 
 ```bash
-git clone <this repo> && cd pipeline_Z
+git clone https://github.com/MGMalecki/gw3-RACE_human.git && cd gw3-RACE_human
 conda env create -f environment_pipeline.yml     # creates env "pipeline_z"
 conda activate pipeline_z
 ```

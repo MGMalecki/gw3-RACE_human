@@ -1,4 +1,4 @@
-# Minimal environment for pipeline_Z: fastq -> R_output/<stem>_final_{big,small}.rds
+# Minimal environment for gw3-RACE_human: fastq -> R_output/<stem>_final_{big,small}.rds
 #
 # This is the complete dependency set for the workflow. `environment.yml` in this repo is a
 # broader general-purpose genomics environment and is NOT required to run the pipeline.

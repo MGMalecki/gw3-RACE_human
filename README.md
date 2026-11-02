@@ -15,7 +15,7 @@ it came from. Input is two FASTQ files per library; output is two tidy R tables.
 - [Output](#output)
 - [QC](#qc)
 - [Caveats and limitations](#caveats-and-limitations)
-- [Worked example: the reference dataset](#worked-example-the-reference-dataset)
+- [Scale and runtime](#scale-and-runtime)
 - [Repository layout](#repository-layout)
 
 ---
@@ -68,9 +68,10 @@ means editing that rule — they are not currently config keys.
 | Transcriptome FASTA | the bowtie2 index R1 is aligned to |
 | Gene annotation table (`.rds`) | gene coordinates, strand and biotype for the R stage |
 
-The reference set was built from GRCh38 primary assembly with GENCODE v47 (junctions) and a v50 gene
-table. Substituting other versions is fine; see [Caveats](#caveats-and-limitations) for what the
-mismatch costs.
+The pipeline is human-specific only in the annotation table it ships
+(`annotation/gene_annotations_v50.rds`); it was developed against GRCh38 primary assembly with
+GENCODE v47 (junctions) and a v50 gene table. Substituting other versions is fine; see
+[Caveats](#caveats-and-limitations) for what the mismatch costs.
 
 ## Installation and references
 
@@ -193,13 +194,14 @@ wt_1	MYSAMPLE_A	WT	1	S01	fastq_read1/MYSAMPLE_A_R1_001.fastq.gz	fastq_read2/MYSA
 ko_1	MYSAMPLE_B	KO	1	S02	fastq_read1/MYSAMPLE_B_R1_001.fastq.gz	fastq_read2/MYSAMPLE_B_R2_001.fastq.gz
 ```
 
-(Real tabs between fields, not spaces. The shipped file has twelve rows you can use as a model.)
+(Real tabs between fields, not spaces. The shipped `config/samples.tsv` is exactly this
+two-row example — overwrite it with your own libraries.)
 
 | Column | Required | What it does |
 |---|---|---|
 | `output_name` | label only | short handle for your own use; also accepted by `ONLY=` |
 | `pipeline_name` | **yes** | **the stem** — see below |
-| `genotype` | label only | grouping label, carried into the QC report |
+| `genotype` | label only | grouping label; carried through for your own bookkeeping |
 | `replicate` | label only | — |
 | `sample_index` | label only | — |
 | `fastq_r1` | **yes** | path to that library's R1 file |
@@ -234,8 +236,8 @@ Everywhere `<stem>` appears below, substitute your own `pipeline_name`.
 | `config/config_template.yaml` | **yes** — reference paths and STAR parameters |
 | `config/generated/<stem>.yaml` | **no** — written by the driver, one per library, as a record of the exact config each run used |
 
-(`config/generated/` currently holds 17 files: the twelve libraries plus five parameter-trial
-variants. A top-level `config.yaml` also exists and is legacy — see below.)
+(`config/generated/` is empty in a fresh clone and is gitignored — the driver writes one file into
+it per library as it runs, so you keep a record of the exact config behind every table.)
 
 The driver copies the template once per library, substituting `__SAMPLE__`, `__R1__` and `__R2__`
 from the `samples.tsv` row. You edit everything else. The `reference:` block is the part you must
@@ -349,7 +351,7 @@ Reads without the adapter signature are dropped, the UMI moves to the header, 5 
 reads under 80 nt go.
 
 > **The quality filter is disabled on purpose (`-Q`), and it is not a config key.** Illumina quality
-> collapses immediately after a homopolymer: on the reference set the mean Phred of the 20 nt
+> collapses immediately after a homopolymer: in the development libraries the mean Phred of the 20 nt
 > following a tail falls from Q36.4 (no tail) to Q16.9 (57–80 nt tail) through cluster dephasing,
 > while the homopolymer itself stays at Q34–36. Measured with `-q 30 -u 10` on 94,198 adapter-bearing
 > reads: **34.6% of all reads dropped, and 99.4–99.9% of reads carrying a tail ≥20 nt.** A quality
@@ -365,10 +367,10 @@ Two parameter groups are worth understanding before changing them:
 
 - **`outFilterScoreMinOverLread` / `MatchNminOverLread`** compare the aligned portion to the *full
   read length*, so they cap the largest measurable tail. On an 81 nt read: 0.66 (STAR's default) caps
-  anchored tails at 28 nt; 0.50 caps them at 40. The reference set uses 0.50, which admitted 1,469
-  reads with tails ≥30 nt and changed the tail length or class of **none** of the 304,592 reads that
-  were already anchored. Going to 0.30 would raise the cap to 56 nt, but 93.78% of the extra reads are
-  multimappers.
+  anchored tails at 28 nt; 0.50 caps them at 40. The shipped default is 0.50: in the library this was
+  measured on, it admitted 1,469 reads with tails ≥30 nt and changed the tail length or class of
+  **none** of the 304,592 reads already anchored. Going to 0.30 would raise the cap to 56 nt, but
+  93.78% of the extra reads are multimappers.
 - **`outFilterMultimapNmax` / `outSAMmultNmax`** at `20 / 1` keep the best alignment of a multimapper
   so the read retains a real CIGAR, with `NH` recording how many loci it hit. At `1 / 1` any
   multimapper is discarded as unmapped and falls through to the sequence-only branch instead.
@@ -399,7 +401,7 @@ from its gene, or the gene is unannotated. `grep_route_reason` records which.
 
 The one case where the branches are not equivalent is the `oU` (oligo-U) class, which the grep
 branch essentially cannot produce — 550,807 cigar-route reads against 14 grep-route across the
-twelve reference libraries. Branch mix is therefore worth a glance in QC before pooling `oU`
+twelve development libraries. Branch mix is therefore worth a glance in QC before pooling `oU`
 specifically: if it tracks the grouping you are comparing, that class will too. Within
 protein-coding genes the ratio is comparatively stable, so this is mostly a concern for
 whole-transcriptome or biotype-split comparisons.
@@ -474,24 +476,22 @@ d %>%
 
 ## QC
 
-`reports/run_report.qmd` renders a per-run report (requires Quarto, which is **not** in
-`environment_pipeline.yml` — the pipeline runs without it):
+The pipeline ships no report — it writes tables. Four numbers per library are worth checking before
+you analyse anything, all of them available from the output itself:
 
-```bash
-quarto render reports/run_report.qmd
-```
-
-Four numbers to look at first:
-
-1. **Dedup ratio** — from the `_deduplication.csv` files.
-2. **R2 unique vs multi share** — `r2_status`.
+1. **Dedup ratio** — from `R_output/<stem>_deduplication.csv`.
+2. **R2 unique vs multi share** — `r2_status` in the small table.
 3. **Branch mix** — the share of `tail_route == "grep"`.
 4. **Flag rates** — `flag_grep_misrouted` and `flag_genomic_tail`.
 
-Branch mix is a QC number rather than an analysis one. Worth knowing where it sits (54.4–81.2% grep
-across the reference set, varying with mappability and therefore with genotype) so that a shift
-between libraries is recognised as a library property rather than read as biology. Keeping the QC
-tables split by branch is what makes that visible; the analysis tables can be pooled.
+Branch mix is a QC number rather than an analysis one. Worth knowing where it sits for your own
+libraries (54–81% grep in the development set, varying with mappability and therefore between
+samples) so that a shift between libraries is recognised as a library property rather than read as
+biology. Keeping QC tables split by branch is what makes that visible; the analysis tables can be
+pooled.
+
+`logs/run_status.tsv` and `logs/pipeline_manifest.tsv` accumulate one row per library and per written
+table respectively — the cheapest place to notice that something moved.
 
 ## Caveats and limitations
 
@@ -505,9 +505,9 @@ sits 648 nt proximal to that bound; 52.5% of multi-isoform genes are more than 5
 the effect is ~22× worse for lncRNA genes (median 2,962 nt) than protein-coding ones (132 nt). Any
 distance-to-TTS measure inherits this, biased one way, strongest in the richest-annotated genes.
 
-**Annotation version mismatch.** The reference STAR index was built with GENCODE v47 junctions while
-the R stage joins a v50 gene table — a three-release gap. The join fails for 3.17–6.24% of rows
-(mean 4.05%). Note `loc_status == "no_annotation"` is narrower (0.47–0.87%) because it is only
+**Annotation version mismatch.** During development the STAR index was built with GENCODE v47
+junctions while the R stage joined a v50 gene table — a three-release gap. The join failed for
+3.17–6.24% of rows (mean 4.05%). Note `loc_status == "no_annotation"` is narrower (0.47–0.87%) because it is only
 assigned to reads that mapped; an unmapped read lacking annotation is recorded as `r2_unmapped`.
 Build both from one release to avoid this.
 
@@ -528,34 +528,34 @@ the unanchored one.
 floor are hardcoded in the fastp rule, not configurable. The pipeline has only been exercised on
 libraries from one protocol; the mate contract in particular is an assumption it cannot check.
 
-## Worked example: the reference dataset
+## Scale and runtime
 
-Numbers quoted throughout come from twelve HEK-type knockout libraries (TUT4, TUT7, TUT4/7, MOV10,
-DIS3L2, wild-type; two replicates each), sequenced paired-end 2×81 nt on NovaSeq.
-
-All twelve are summarised in `logs/rebuild/qc/summary.tsv`.
+The measurements quoted throughout this README, and the figures below, come from the twelve libraries
+the pipeline was developed on: a human cell line, paired-end 2×81 nt on NovaSeq, 2.4–13.0 M molecules
+per library after deduplication.
 
 | | |
 |---|---|
-| Molecules per library after dedup | 2,428,569 – 12,970,298 |
 | Runtime per library | 12–52 min, tracking depth |
-| Full twelve-library run | ~4 h sequential |
+| Twelve libraries, sequential | ~4 h |
 | Peak RSS, R stage | 16.0 GiB worst case |
-| Branch mix | 54.4–81.2% grep |
-| R2 uniquely mapped | 19.1–34.1% |
-| R2 multimapped | 4.2–27.7% |
-| `flag_grep_misrouted` | 4.5–7.7% of all molecules |
-| `flag_genomic_tail` | 1.7–3.2% of all molecules, i.e. 37.5–44.8% of the misrouted set |
-| Max anchored tail length | 40 nt in all twelve (the 0.50 threshold cap) |
+| Branch mix | 54–81% grep |
+| R2 uniquely mapped | 19–34% |
+| R2 multimapped | 4–28% |
+| `flag_grep_misrouted` | 4.5–7.7% of molecules |
+| `flag_genomic_tail` | 1.7–3.2% of molecules, i.e. 37.5–44.8% of the misrouted set |
+| Max anchored tail length | 40 nt (the 0.50 threshold cap) |
 
-Use these as a sizing guide only. This is the one section where dataset-specific material belongs.
+Treat these as a sizing guide, not an expectation: every figure is a property of those libraries and
+that protocol, not of the pipeline. What should carry across datasets are the *reasons* behind the
+design choices these numbers support, not the numbers.
 
 ## Repository layout
 
 | Path | What |
 |---|---|
 | `Snakefile` | the workflow: nine rules plus `all` |
-| `config/samples.tsv` | one row per library — the single source of truth |
+| `config/samples.tsv` | one row per library — the single source of truth; shipped as a two-row example |
 | `config/config_template.yaml` | reference paths and STAR parameters |
 | `config/generated/<stem>.yaml` | the exact config used per library; provenance |
 | `scripts/run_all_samples.sh` | the driver: all libraries, sequential, resumable |
@@ -565,10 +565,10 @@ Use these as a sizing guide only. This is the one section where dataset-specific
 | `R_scripts/assign_type_and_class.R` | `type` and `class` assignment |
 | `R_scripts/finalise_small_table.R` | typing, fixed factor levels, `schema_version` stamp, atomic write — called by the workflow |
 | `scripts/rebuild/rebuild_one.R` | re-applies the schema to one library from existing `R_input/`, without re-aligning |
-| `reports/run_report.qmd` | QC report (needs Quarto) |
 | `docs/OUTPUT_COLUMNS.md` | **every output column explained** |
 | `docs/TAIL_CATEGORIES.md` | class vocabulary and derivation, cited to file:line |
 | `environment_pipeline.yml` | **the pipeline's dependencies** — 13 packages, env `pipeline_z` |
+| `annotation/gene_annotations_v50.rds` | gene coordinates, strand and biotype for the R stage — the one tracked binary |
 | `logs/run_status.tsv` | per-library start/finish/exit; drives the driver's resume logic |
 
 Analysis downstream of these tables — thresholds, pooling, biotype comparisons, reports — lives in a

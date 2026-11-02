@@ -1,13 +1,3 @@
 output_name	pipeline_name	genotype	replicate	sample_index	fastq_r1	fastq_r2
-t4_1	T4_5_S321	TUT4	1	S321	fastq_read1/T4_5_S321_R1_001.fastq.gz	fastq_read2/T4_5_S321_R2_001.fastq.gz
-t4_2	T4_12_S4	TUT4	2	S4	fastq_read1/T4_12_S4_R1_001.fastq.gz	fastq_read2/T4_12_S4_R2_001.fastq.gz
-t7_1	T7_9_S325	TUT7	1	S325	fastq_read1/T7_9_S325_R1_001.fastq.gz	fastq_read2/T7_9_S325_R2_001.fastq.gz
-t7_2	T7_14_S326	TUT7	2	S326	fastq_read1/T7_14_S326_R1_001.fastq.gz	fastq_read2/T7_14_S326_R2_001.fastq.gz
-t7_3	T7_16_S324	TUT7	3	S324	fastq_read1/T7_16_S324_R1_001.fastq.gz	fastq_read2/T7_16_S324_R2_001.fastq.gz
-t47_1	T47_5_S323	TUT4_TUT7	1	S323	fastq_read1/T47_5_S323_R1_001.fastq.gz	fastq_read2/T47_5_S323_R2_001.fastq.gz
-t47_2	T47_12_S322	TUT4_TUT7	2	S322	fastq_read1/T47_12_S322_R1_001.fastq.gz	fastq_read2/T47_12_S322_R2_001.fastq.gz
-d3l2_1	D3L2_1_S330	DIS3L2	1	S330	fastq_read1/D3L2_1_S330_R1_001.fastq.gz	fastq_read2/D3L2_1_S330_R2_001.fastq.gz
-d3l2_2	D3L2_8_S329	DIS3L2	2	S329	fastq_read1/D3L2_8_S329_R1_001.fastq.gz	fastq_read2/D3L2_8_S329_R2_001.fastq.gz
-m10_1	M10_3_S328	MOV10	1	S328	fastq_read1/M10_3_S328_R1_001.fastq.gz	fastq_read2/M10_3_S328_R2_001.fastq.gz
-m10_2	M10_5_S327	MOV10	2	S327	fastq_read1/M10_5_S327_R1_001.fastq.gz	fastq_read2/M10_5_S327_R2_001.fastq.gz
-flpwt_1	FLPWT_S331	WT	1	S331	fastq_read1/FLPWT_S331_R1_001.fastq.gz	fastq_read2/FLPWT_S331_R2_001.fastq.gz
+wt_1	MYSAMPLE_A	WT	1	S01	fastq_read1/MYSAMPLE_A_R1_001.fastq.gz	fastq_read2/MYSAMPLE_A_R2_001.fastq.gz
+ko_1	MYSAMPLE_B	KO	1	S02	fastq_read1/MYSAMPLE_B_R1_001.fastq.gz	fastq_read2/MYSAMPLE_B_R2_001.fastq.gz

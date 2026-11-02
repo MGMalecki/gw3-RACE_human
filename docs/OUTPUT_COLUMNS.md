@@ -38,7 +38,7 @@ break the tie.
 | `start`, `end` | integer | Gene's outermost bounds, i.e. the union extent across **all** its annotated transcripts |
 | `strand` | factor | `+` / `-` |
 
-`NA` in all four means the gene ID was absent from the annotation table. On the reference set that
+`NA` in all four means the gene ID was absent from the annotation table. In the development set that
 is 3–6% of rows.
 
 **`start`/`end` are gene-level, not transcript-level.** For a `+` gene the annotated 3' end is
@@ -68,7 +68,7 @@ largest reportable tail. These columns let you re-apply any stricter threshold w
 
 | Column | Type | Meaning |
 |---|---|---|
-| `read_len` | integer | R2 length after fastp. Fixed by the protocol (81 nt on the reference set) |
+| `read_len` | integer | R2 length after fastp. Fixed by the protocol (81 nt in the development set) |
 | `score_frac` | numeric | `AS / read_len` |
 | `match_frac` | numeric | matched bases / `read_len` |
 | `passes_030`, `passes_040`, `passes_050`, `passes_066` | logical | Would this read survive `outFilterScoreMinOverLread` / `MatchNminOverLread` at 0.30 / 0.40 / 0.50 / 0.66 |

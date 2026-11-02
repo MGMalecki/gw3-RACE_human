@@ -1,8 +1,8 @@
 # =====================================================================
 # Scope: this repo IS the fastq -> RDS pipeline. Tracked content is the
-# workflow, the R stage, the config templates, the docs and the QC
-# report source -- roughly 20 files. Everything a run produces is
-# regenerable from the FASTQs and stays out.
+# workflow, the R stage, the config templates and the docs -- roughly 20
+# files. Everything a run produces is regenerable from the FASTQs and
+# stays out.
 #
 # NB: gitignore has no trailing comments -- a '#' after a pattern makes
 # it part of the pattern and the rule silently stops matching. Comments
@@ -50,8 +50,6 @@ R_output/*
 *_fp_report.html
 *_fp_report.json
 fastp.json
-reports/*.html
-reports/*_metrics.tsv
 *.pdf
 
 # ---- Per-library configs: the driver regenerates these from the template ----
